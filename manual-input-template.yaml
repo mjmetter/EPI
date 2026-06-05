@@ -1,0 +1,63 @@
+# EPI Manual Input Template
+#
+# Fill in this template once per product per month for metrics that
+# cannot yet be automated. Takes ~5 minutes.
+#
+# Save as: products/<product>/manual-YYYY-MM.yaml
+# Example: products/app_a/manual-2026-03.yaml
+
+product: ""           # A product key defined in repos.yaml (e.g. app_a)
+month: ""             # Format: YYYY-MM (e.g., 2026-03)
+submitted_by: ""      # Engineering Manager name
+submitted_date: ""    # Date this was filled in
+
+# ─── Delivery Velocity (partial) ──────────────────────────────────────────────
+
+deployment_frequency: 0       # Production deployments this month
+                              # Count: each deployment to production
+                              # Include: rollbacks that went to prod (they still count as deploys)
+                              # Exclude: staging/dev deployments
+
+features_shipped: 0           # Jira tickets moved to "Done" with production code this month
+                              # If unsure, use the count of tickets linked to merged MRs
+
+# ─── Delivery Quality ─────────────────────────────────────────────────────────
+
+rollbacks: 0                  # Deployments that caused rollback or hotfix
+                              # Used to calculate: change_failure_rate = rollbacks / deployment_frequency
+
+post_release_defects: 0       # Bug tickets opened within 14 days of a deployment
+                              # Source: Jira filter for bugs created in the last 14 days
+                              #         linked to a recent release
+
+# ─── Engineering Efficiency ────────────────────────────────────────────────────
+
+lead_time_median_days: 0.0    # Median days from first commit to production deployment
+                              # For manual input: estimate based on typical ticket flow
+                              # Phase 2 will automate this from git + CI data
+
+cycle: ""                     # Optional: which cycle this data belongs to (e.g., C2, C3)
+                              # Used to label cycle_delivery_accuracy in reports.
+                              # When a month has no new cycle data, the previous cycle's
+                              # values are carried forward automatically (up to 2 months).
+cycle_items_committed: 0      # Items committed for this cycle (from sprint/cycle planning)
+cycle_items_delivered: 0      # Items delivered on time (actually completed in the cycle)
+                              # Cycle accuracy = delivered / committed * 100
+
+# ─── Engineering Health ────────────────────────────────────────────────────────
+
+incidents:
+  sev1: 0                     # Critical: service down, data loss, security breach
+  sev2: 0                     # Major: significant functionality impaired
+  sev3: 0                     # Minor: degraded but functional
+
+mttr_hours: 0.0               # Mean time to restore service (hours)
+                              # Source: PagerDuty or incident tracker
+                              # Calculate: average of (resolved_at - created_at) for all incidents
+                              # If no incidents this month, leave as 0 (will be scored as Elite)
+
+# ─── Notes ─────────────────────────────────────────────────────────────────────
+
+notes: ""                     # Optional: anything unusual this month
+                              # e.g., "Major refactoring sprint — low feature count expected"
+                              #        "Holiday month — reduced deployment cadence"

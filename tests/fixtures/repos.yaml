@@ -1,0 +1,18 @@
+products:
+  alpha:
+    display_name: "Alpha Product"
+    support_repos:
+      - repo-c
+    repos:
+      - name: repo-a
+        branch: main
+  beta:
+    display_name: "Beta Product"
+    repos:
+      - name: repo-b
+        branch: main
+  gamma:
+    display_name: "Gamma Product"
+    repos:
+      - name: repo-bot-test
+        branch: main

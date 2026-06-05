@@ -1,0 +1,9 @@
+deployment_frequency: 6
+features_shipped: 20
+rollbacks: 1
+post_release_defects: 3
+lead_time_median_days: 5.0
+cycle: C1
+cycle_items_committed: 18
+cycle_items_delivered: 15
+mttr_hours: 2.5

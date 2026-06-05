@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "repo": "repo-a",
+    "month": "2026-01",
+    "branch": "main",
+    "collected_at": "2026-02-01T00:00:00Z",
+    "date_range": {"start": "2026-01-01", "end": "2026-02-01"},
+    "trailing_window": {"start": "2025-07-01", "end": "2026-02-01"}
+  },
+  "commits": {
+    "total": 100,
+    "active_contributors": 6,
+    "per_contributor": {
+      "alice": 35,
+      "bob": 25,
+      "carol": 15,
+      "dave": 12,
+      "eve": 8,
+      "frank": 5
+    }
+  },
+  "tickets": {
+    "unique_count": 18,
+    "ids": ["ALPHA-400", "ALPHA-401", "ALPHA-402", "ALPHA-403", "ALPHA-404",
+            "ALPHA-405", "ALPHA-406", "ALPHA-407", "ALPHA-408", "ALPHA-409",
+            "ALPHA-410", "ALPHA-411", "ALPHA-412", "ALPHA-413", "ALPHA-414",
+            "ALPHA-415", "ALPHA-416", "ALPHA-417"]
+  },
+  "lines_changed": {"added": 7500, "removed": 3500, "net": 4000},
+  "focus_score": {"percentage": 80.0, "focused_commits": 80, "total_scored": 100},
+  "commit_classification": {
+    "feature": 42, "bugfix": 12, "test": 16, "tooling": 8,
+    "maintenance": 10, "docs": 6, "other": 6
+  },
+  "rework_rate": {
+    "percentage": 22.2,
+    "bugfix_count": 12,
+    "feature_plus_bugfix": 54
+  },
+  "bus_factor": {"value": 4, "trailing_months": 6, "total_trailing_commits": 550},
+  "knowledge_distribution": {
+    "percentage": 70.0,
+    "multi_contributor_modules": 14,
+    "total_modules": 20
+  },
+  "mrs": {"total": 38, "per_engineer": 6.3, "gitlab_api_used": true}
+}

@@ -1,0 +1,18 @@
+# squads.yaml — optional mapping of teams ("squads") to the repos they own.
+# Copy to `squads.yaml` and edit. Used for squad-level rollups in reporting.
+
+squads:
+  squad-one:
+    display_name: "Squad One"
+    em: "Engineering Manager Name"
+    repos:
+      - product: app_a
+        name: service-one
+      - product: app_b
+        name: app-b-core
+  squad-two:
+    display_name: "Squad Two"
+    em: "Engineering Manager Name"
+    repos:
+      - product: app_c
+        name: core

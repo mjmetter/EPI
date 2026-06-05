@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "repo": "repo-c",
+    "month": "2025-12",
+    "branch": "main",
+    "category": "support",
+    "collected_at": "2026-01-01T00:00:00Z",
+    "date_range": {"start": "2025-12-01", "end": "2026-01-01"},
+    "trailing_window": {"start": "2025-06-01", "end": "2026-01-01"}
+  },
+  "commits": {
+    "total": 30,
+    "active_contributors": 3,
+    "per_contributor": {
+      "alice": 15,
+      "harry": 10,
+      "iris": 5
+    }
+  },
+  "tickets": {
+    "unique_count": 5,
+    "ids": ["ALPHA-400", "ALPHA-401", "ALPHA-402", "ALPHA-403", "ALPHA-404"]
+  },
+  "lines_changed": {"added": 2000, "removed": 800, "net": 1200},
+  "focus_score": {"percentage": 70.0, "focused_commits": 21, "total_scored": 30},
+  "commit_classification": {
+    "feature": 12, "bugfix": 5, "test": 5, "tooling": 3,
+    "maintenance": 2, "docs": 1, "other": 2
+  },
+  "rework_rate": {
+    "percentage": 29.4,
+    "bugfix_count": 5,
+    "feature_plus_bugfix": 17
+  },
+  "bus_factor": {"value": 2, "trailing_months": 6, "total_trailing_commits": 150},
+  "knowledge_distribution": {
+    "percentage": 50.0,
+    "multi_contributor_modules": 4,
+    "total_modules": 8
+  },
+  "mrs": {"total": 12, "per_engineer": 4.0, "gitlab_api_used": true}
+}

@@ -1,0 +1,10 @@
+# Pre-commit hooks — opt-in. Run `pre-commit install` to enable.
+# CI is the enforcement point; these are a convenience for local development.
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format

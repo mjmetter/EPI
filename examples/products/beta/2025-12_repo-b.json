@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "repo": "repo-b",
+    "month": "2025-12",
+    "branch": "main",
+    "collected_at": "2026-01-01T00:00:00Z",
+    "date_range": {"start": "2025-12-01", "end": "2026-01-01"},
+    "trailing_window": {"start": "2025-06-01", "end": "2026-01-01"}
+  },
+  "commits": {
+    "total": 15,
+    "active_contributors": 2,
+    "per_contributor": {
+      "zack": 10,
+      "yara": 5
+    }
+  },
+  "tickets": {
+    "unique_count": 3,
+    "ids": ["BETA-50", "BETA-51", "BETA-52"]
+  },
+  "lines_changed": {"added": 800, "removed": 200, "net": 600},
+  "focus_score": {"percentage": 60.0, "focused_commits": 9, "total_scored": 15},
+  "commit_classification": {
+    "feature": 5, "bugfix": 4, "test": 2, "tooling": 1,
+    "maintenance": 1, "docs": 1, "other": 1
+  },
+  "rework_rate": {
+    "percentage": 44.4,
+    "bugfix_count": 4,
+    "feature_plus_bugfix": 9
+  },
+  "bus_factor": {"value": 1, "trailing_months": 6, "total_trailing_commits": 30},
+  "knowledge_distribution": {
+    "percentage": 33.3,
+    "multi_contributor_modules": 1,
+    "total_modules": 3
+  },
+  "mrs": {"total": 8, "per_engineer": 4.0, "gitlab_api_used": true}
+}

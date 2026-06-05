@@ -1,0 +1,33 @@
+# Manual Health Assessment Template
+#
+# When running the monthly repo health prompt (MONTHLY_REPO_HEALTH_PROMPT.md),
+# produce this file alongside the markdown report.
+#
+# Save as: products/{product}/manual-health-YYYY-MM_{repo}.yaml
+#
+# These metrics are assessed by Claude and complement the automated metrics
+# collected by collect-repo-health.py.
+
+repo: "example-repo"
+product: "app_a"
+month: "2026-03"
+assessor: "claude"
+
+# Test intent score (0-10): how well tests express intent and cover meaningful scenarios
+test_intent_score: 5.5
+
+# Assertion quality: low / medium / high
+# low = mostly smoke tests, medium = decent assertions, high = thorough edge cases
+assertion_quality: "medium"
+
+# Naming clarity score (0-10): how readable and self-documenting are identifiers
+naming_clarity_score: 7.0
+
+# Comment quality — what % of comments explain "why" vs restating "what"
+comment_quality_why_pct: 35
+
+# Magic number density: unnamed numeric literals per 1000 LOC
+magic_number_density: 2.1
+
+# Architecture doc coverage: % of modules with ADRs, design docs, or architecture notes
+architecture_doc_coverage: 60

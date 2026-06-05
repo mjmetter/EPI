@@ -1,0 +1,17 @@
+squads:
+  squad-ab:
+    display_name: "Squad AB"
+    em: "Test EM"
+    repos:
+      - product: alpha
+        name: repo-a
+      - product: beta
+        name: repo-b
+  squad-missing:
+    display_name: "Squad With Gap"
+    em: "Nobody"
+    repos:
+      - product: alpha
+        name: repo-a
+      - product: alpha
+        name: nonexistent-repo

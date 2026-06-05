@@ -1,0 +1,27 @@
+# ai-spend.yaml — manually maintained monthly AI-tooling spend and active users.
+# Copy to `ai-spend.yaml`. Schema: {series_name: {YYYY-MM: number}}.
+# All series are optional; the dashboard renders whatever is present.
+
+# Monthly spend in USD per tool
+litellm:
+  2025-10: 1200.0
+  2025-11: 1500.0
+  2025-12: 1800.0
+cursor:
+  2025-10: 900.0
+  2025-11: 950.0
+  2025-12: 1000.0
+openai:
+  2025-10: 300.0
+  2025-11: 320.0
+  2025-12: 280.0
+
+# Monthly active users per tool (drives the dual-axis overlay)
+litellm_active_users:
+  2025-10: 40
+  2025-11: 55
+  2025-12: 70
+cursor_active_users:
+  2025-10: 30
+  2025-11: 45
+  2025-12: 60

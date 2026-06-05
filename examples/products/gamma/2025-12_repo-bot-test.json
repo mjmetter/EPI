@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "repo": "repo-bot-test",
+    "month": "2025-12",
+    "branch": "main",
+    "collected_at": "2026-01-01T00:00:00Z",
+    "date_range": {"start": "2025-12-01", "end": "2026-01-01"},
+    "trailing_window": {"start": "2025-06-01", "end": "2026-01-01"}
+  },
+  "commits": {
+    "total": 100,
+    "active_contributors": 8,
+    "per_contributor": {
+      "alice": 30,
+      "bob": 25,
+      "carol": 20,
+      "dave": 10,
+      "jenkins": 5,
+      "project_42_bot_deploy": 4,
+      "prodops": 3,
+      "ghost": 3
+    }
+  },
+  "tickets": {
+    "unique_count": 15,
+    "ids": ["GAMMA-1", "GAMMA-2", "GAMMA-3", "GAMMA-4", "GAMMA-5",
+            "GAMMA-6", "GAMMA-7", "GAMMA-8", "GAMMA-9", "GAMMA-10",
+            "GAMMA-11", "GAMMA-12", "GAMMA-13", "GAMMA-14", "GAMMA-15"]
+  },
+  "lines_changed": {"added": 5000, "removed": 2000, "net": 3000},
+  "focus_score": {"percentage": 80.0, "focused_commits": 80, "total_scored": 100},
+  "commit_classification": {
+    "feature": 40, "bugfix": 15, "test": 15, "tooling": 10,
+    "maintenance": 10, "docs": 5, "other": 5
+  },
+  "rework_rate": {
+    "percentage": 27.3,
+    "bugfix_count": 15,
+    "feature_plus_bugfix": 55
+  },
+  "bus_factor": {"value": 3, "trailing_months": 6, "total_trailing_commits": 400},
+  "knowledge_distribution": {
+    "percentage": 60.0,
+    "multi_contributor_modules": 9,
+    "total_modules": 15
+  },
+  "mrs": {"total": 40, "per_engineer": 5.0, "gitlab_api_used": true}
+}

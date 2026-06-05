@@ -1,0 +1,53 @@
+{
+  "meta": {
+    "repo": "repo-a",
+    "month": "2025-12",
+    "branch": "main",
+    "collected_at": "2026-01-01T00:00:00Z",
+    "date_range": {"start": "2025-12-01", "end": "2026-01-01"},
+    "trailing_window": {"start": "2025-06-01", "end": "2026-01-01"}
+  },
+  "commits": {
+    "total": 120,
+    "active_contributors": 7,
+    "per_contributor": {
+      "alice": 40,
+      "bob": 28,
+      "carol": 18,
+      "dave": 14,
+      "eve": 10,
+      "frank": 6,
+      "grace": 4
+    }
+  },
+  "tickets": {
+    "unique_count": 22,
+    "ids": ["ALPHA-300", "ALPHA-301", "ALPHA-302", "ALPHA-303", "ALPHA-304",
+            "ALPHA-305", "ALPHA-306", "ALPHA-307", "ALPHA-308", "ALPHA-309",
+            "ALPHA-310", "ALPHA-311", "ALPHA-312", "ALPHA-313", "ALPHA-314",
+            "ALPHA-315", "ALPHA-316", "ALPHA-317", "ALPHA-318", "ALPHA-319",
+            "ALPHA-320", "ALPHA-321"]
+  },
+  "lines_changed": {"added": 9000, "removed": 4000, "net": 5000},
+  "focus_score": {"percentage": 82.5, "focused_commits": 99, "total_scored": 120},
+  "commit_classification": {
+    "feature": 50, "bugfix": 10, "test": 20, "tooling": 10,
+    "maintenance": 12, "docs": 8, "other": 10
+  },
+  "mr_classification": {
+    "feature": 0, "bugfix": 5, "test": 0, "tooling": 0,
+    "maintenance": 0, "docs": 0, "other": 0
+  },
+  "rework_rate": {
+    "percentage": 16.7,
+    "bugfix_count": 10,
+    "feature_plus_bugfix": 60
+  },
+  "bus_factor": {"value": 5, "trailing_months": 6, "total_trailing_commits": 600},
+  "knowledge_distribution": {
+    "percentage": 75.0,
+    "multi_contributor_modules": 15,
+    "total_modules": 20
+  },
+  "mrs": {"total": 45, "per_engineer": 6.4, "gitlab_api_used": true}
+}

@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "repo": "repo-a",
+    "month": "2025-10",
+    "branch": "main",
+    "collected_at": "2025-11-01T00:00:00Z",
+    "date_range": {"start": "2025-10-01", "end": "2025-11-01"},
+    "trailing_window": {"start": "2025-04-01", "end": "2025-11-01"}
+  },
+  "commits": {
+    "total": 80,
+    "active_contributors": 5,
+    "per_contributor": {
+      "alice": 30,
+      "bob": 20,
+      "carol": 15,
+      "dave": 10,
+      "eve": 5
+    }
+  },
+  "tickets": {
+    "unique_count": 12,
+    "ids": ["ALPHA-100", "ALPHA-101", "ALPHA-102", "ALPHA-103", "ALPHA-104",
+            "ALPHA-105", "ALPHA-106", "ALPHA-107", "ALPHA-108", "ALPHA-109",
+            "ALPHA-110", "ALPHA-111"]
+  },
+  "lines_changed": {"added": 5000, "removed": 2000, "net": 3000},
+  "focus_score": {"percentage": 70.0, "focused_commits": 56, "total_scored": 80},
+  "commit_classification": {
+    "feature": 30, "bugfix": 15, "test": 10, "tooling": 5,
+    "maintenance": 8, "docs": 4, "other": 8
+  },
+  "rework_rate": {
+    "percentage": 33.3,
+    "bugfix_count": 15,
+    "feature_plus_bugfix": 45
+  },
+  "bus_factor": {"value": 3, "trailing_months": 6, "total_trailing_commits": 400},
+  "knowledge_distribution": {
+    "percentage": 55.0,
+    "multi_contributor_modules": 11,
+    "total_modules": 20
+  },
+  "mrs": {"total": 25, "per_engineer": 5.0, "gitlab_api_used": true}
+}

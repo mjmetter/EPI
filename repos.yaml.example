@@ -1,0 +1,60 @@
+# repos.yaml — single source of truth for products and their repositories.
+#
+# Copy this file to `repos.yaml` and replace the example values. Tokens are NOT
+# stored here — only the NAME of the environment variable that holds each token
+# (see .env.example). Hosts below use example.com placeholders.
+#
+# A "product" is a logical grouping of one or more repositories. The collectors
+# and the dashboard roll metrics up per product.
+
+products:
+
+  # ── Simple product: an explicit list of repos on one GitLab instance ────────
+  app_a:
+    display_name: "App A"
+    gitlab_instance: https://githost.example.com
+    token_env: GITLAB_TOKEN            # env var holding the API token
+    jira_instance: https://your-org.atlassian.net   # optional, for ticket types
+    repos:
+      - name: service-one
+        project_id: "123"              # GitLab numeric project ID
+        namespace: org/group/service-one
+        path: /path/to/local/clone     # local clone used for git log analysis
+        branch: main
+        ticket_prefix: APPA            # Jira project key used in commit messages
+      - name: service-two
+        project_id: "124"
+        namespace: org/group/service-two
+        path: /path/to/local/clone-two
+        branch: main
+        ticket_prefix: APPA
+
+  # ── Instance-wide product: every repo under one or more groups ──────────────
+  app_b:
+    display_name: "App B"
+    gitlab_instance: https://githost.example.com
+    token_env: GITLAB_TOKEN
+    groups:
+      - path: org/app-b               # all repos under this group are included
+    exclude_groups:
+      - org/app-b/archived            # subtrees to skip
+    support_repos:                    # repos shown but collapsed (infra/tooling)
+      - app-b-ci
+
+  # ── Multi-source product: repos spanning more than one instance/group ───────
+  app_c:
+    display_name: "App C"
+    sources:
+      - gitlab_instance: https://githost.example.com
+        token_env: GITLAB_TOKEN
+        repos:
+          - name: core
+            project_id: "200"
+            namespace: org/app-c/core
+            path: /path/to/app-c-core
+            branch: main
+            ticket_prefix: APPC
+      - gitlab_instance: https://other-host.example.com
+        token_env: GITLAB_OTHER_TOKEN   # a different token env var per source
+        groups:
+          - path: org2/app-c-extra

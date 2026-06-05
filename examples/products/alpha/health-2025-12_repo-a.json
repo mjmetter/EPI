@@ -1,0 +1,31 @@
+{
+  "repo": "repo-a",
+  "month": "2025-12",
+  "ci_cd": {
+    "has_ci": true,
+    "pipeline_config": ".gitlab-ci.yml"
+  },
+  "ai_readiness": {
+    "claude_md_exists": true,
+    "feature_test_coupling": {"value": 45.0}
+  },
+  "documentation": {
+    "readme_exists": true,
+    "contributing_exists": false
+  },
+  "ai_adoption": {
+    "co_authored_commits": {"total": 5, "by_tool": {"claude": 5}},
+    "co_authored_rate": 4.2,
+    "mr_ai_usage": {"total_mrs": 0, "none": 0, "ai_augmented": 0, "agentic": 0, "na": 0},
+    "ai_assisted_mr_rate": 0.0,
+    "ai_assisted_commits": 42,
+    "ai_assisted_commit_rate": 35.0,
+    "cursor_line_attribution": {
+      "commits_matched": 37,
+      "tab_lines_added": 120,
+      "composer_lines_added": 4800,
+      "non_ai_lines_added": 800,
+      "total_lines_added": 5720
+    }
+  }
+}
