@@ -1,5 +1,22 @@
 # Contributing to EPI Data
 
+## License & Contributor Agreement
+
+This project is licensed under the [MIT License](LICENSE), copyright Michael
+Metternich. By submitting a contribution (pull/merge request, patch, or other
+content) to this project, you agree that:
+
+1. Your contribution is licensed to the project under the same MIT License, and
+2. You grant Michael Metternich, as maintainer, a perpetual, worldwide,
+   non-exclusive license to use, modify, relicense, and sublicense your
+   contribution as part of the project — including in versions distributed
+   under different license terms in the future.
+
+This keeps the project's licensing simple and consistent for everyone who
+depends on it, while ensuring contributors always retain the rights to their
+own original work outside this project. If your employer requires a signed
+CLA before you can contribute, reach out before opening a merge request.
+
 ## Getting Started
 
 ```bash

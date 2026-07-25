@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 from epi.api.gitlab import fetch_jira_issue_types
 from epi.collectors.git_metrics import (
-    JIRA_TYPE_MAP,
+    ISSUE_TYPE_MAP,
     build_commit_ticket_map,
     classify_commits,
     classify_mrs,
@@ -20,16 +20,16 @@ class TestJiraTypeMap(unittest.TestCase):
     """Verify the Jira type → classification mapping."""
 
     def test_bug_maps_to_bugfix(self):
-        self.assertEqual(JIRA_TYPE_MAP["Bug"], "bugfix")
+        self.assertEqual(ISSUE_TYPE_MAP["Bug"], "bugfix")
 
     def test_story_maps_to_feature(self):
-        self.assertEqual(JIRA_TYPE_MAP["Story"], "feature")
+        self.assertEqual(ISSUE_TYPE_MAP["Story"], "feature")
 
     def test_epic_maps_to_feature(self):
-        self.assertEqual(JIRA_TYPE_MAP["Epic"], "feature")
+        self.assertEqual(ISSUE_TYPE_MAP["Epic"], "feature")
 
     def test_task_not_mapped(self):
-        self.assertNotIn("Task", JIRA_TYPE_MAP)
+        self.assertNotIn("Task", ISSUE_TYPE_MAP)
 
 
 class TestClassifyCommitsWithJira(unittest.TestCase):
@@ -37,45 +37,45 @@ class TestClassifyCommitsWithJira(unittest.TestCase):
 
     def test_bug_ticket_classifies_as_bugfix(self):
         commits = [{"subject": "PROJ-123 Update login page", "hash": "abc"}]
-        jira_types = {"PROJ-123": "Bug"}
-        result = classify_commits(commits, jira_types=jira_types)
+        ticket_types = {"PROJ-123": "Bug"}
+        result = classify_commits(commits, ticket_types=ticket_types)
         self.assertEqual(result["bugfix"], 1)
         self.assertEqual(result["feature"], 0)
 
     def test_story_ticket_classifies_as_feature(self):
         commits = [{"subject": "PROJ-456 Fix the dashboard layout", "hash": "def"}]
-        jira_types = {"PROJ-456": "Story"}
-        result = classify_commits(commits, jira_types=jira_types)
+        ticket_types = {"PROJ-456": "Story"}
+        result = classify_commits(commits, ticket_types=ticket_types)
         self.assertEqual(result["feature"], 1)
         # "Fix" in subject would normally be bugfix — Jira type wins
         self.assertEqual(result["bugfix"], 0)
 
     def test_epic_ticket_classifies_as_feature(self):
         commits = [{"subject": "PROJ-10 Refactor user module", "hash": "ghi"}]
-        jira_types = {"PROJ-10": "Epic"}
-        result = classify_commits(commits, jira_types=jira_types)
+        ticket_types = {"PROJ-10": "Epic"}
+        result = classify_commits(commits, ticket_types=ticket_types)
         self.assertEqual(result["feature"], 1)
         self.assertEqual(result["maintenance"], 0)
 
     def test_task_falls_through_to_regex(self):
-        """Task type is not in JIRA_TYPE_MAP, so regex takes over."""
+        """Task type is not in ISSUE_TYPE_MAP, so regex takes over."""
         commits = [{"subject": "PROJ-789 Fix login bug", "hash": "jkl"}]
-        jira_types = {"PROJ-789": "Task"}
-        result = classify_commits(commits, jira_types=jira_types)
+        ticket_types = {"PROJ-789": "Task"}
+        result = classify_commits(commits, ticket_types=ticket_types)
         # "Fix" + "bug" should be caught by regex as bugfix
         self.assertEqual(result["bugfix"], 1)
         self.assertEqual(result["feature"], 0)
 
     def test_unknown_type_falls_through_to_regex(self):
         commits = [{"subject": "PROJ-100 Add new endpoint", "hash": "mno"}]
-        jira_types = {"PROJ-100": "Initiative"}  # not in JIRA_TYPE_MAP
-        result = classify_commits(commits, jira_types=jira_types)
+        ticket_types = {"PROJ-100": "Initiative"}  # not in ISSUE_TYPE_MAP
+        result = classify_commits(commits, ticket_types=ticket_types)
         # "Add" should be caught by regex as feature
         self.assertEqual(result["feature"], 1)
 
     def test_no_jira_types_uses_regex_only(self):
         commits = [{"subject": "fix: resolve crash on startup", "hash": "pqr"}]
-        result = classify_commits(commits, jira_types=None)
+        result = classify_commits(commits, ticket_types=None)
         self.assertEqual(result["bugfix"], 1)
 
     def test_mixed_jira_and_regex(self):
@@ -86,34 +86,34 @@ class TestClassifyCommitsWithJira(unittest.TestCase):
             {"subject": "PROJ-2 Cleanup old code", "hash": "a3"},  # Jira: Story → feature
             {"subject": "PROJ-3 Some task work", "hash": "a4"},  # Jira: Task → regex fallback
         ]
-        jira_types = {"PROJ-1": "Bug", "PROJ-2": "Story", "PROJ-3": "Task"}
-        result = classify_commits(commits, jira_types=jira_types)
+        ticket_types = {"PROJ-1": "Bug", "PROJ-2": "Story", "PROJ-3": "Task"}
+        result = classify_commits(commits, ticket_types=ticket_types)
         self.assertEqual(result["bugfix"], 1)  # PROJ-1
         self.assertEqual(result["feature"], 2)  # dark mode + PROJ-2
         # PROJ-3 "Some task work" has no regex match → other
         self.assertEqual(result["other"], 1)
 
     def test_commit_with_unknown_ticket_falls_to_regex(self):
-        """Ticket in subject but not in jira_types dict — regex fallback."""
+        """Ticket in subject but not in ticket_types dict — regex fallback."""
         commits = [{"subject": "PROJ-999 fix: resolve bug", "hash": "xyz"}]
-        jira_types = {"PROJ-1": "Bug"}  # PROJ-999 not present
-        result = classify_commits(commits, jira_types=jira_types)
+        ticket_types = {"PROJ-1": "Bug"}  # PROJ-999 not present
+        result = classify_commits(commits, ticket_types=ticket_types)
         self.assertEqual(result["bugfix"], 1)  # regex catches "fix" + "bug"
 
     def test_empty_jira_types_dict_uses_regex(self):
         commits = [{"subject": "feat: new feature", "hash": "abc"}]
-        result = classify_commits(commits, jira_types={})
+        result = classify_commits(commits, ticket_types={})
         # Empty dict is falsy, so regex path taken
         self.assertEqual(result["feature"], 1)
 
 
 class TestClassifyMrsWithJira(unittest.TestCase):
-    """Test classify_mrs passes jira_types through."""
+    """Test classify_mrs passes ticket_types through."""
 
     def test_mr_titles_with_jira_types(self):
         titles = ["PROJ-10 Fix production crash", "PROJ-20 Add new dashboard"]
-        jira_types = {"PROJ-10": "Bug", "PROJ-20": "Story"}
-        result = classify_mrs(titles, jira_types=jira_types)
+        ticket_types = {"PROJ-10": "Bug", "PROJ-20": "Story"}
+        result = classify_mrs(titles, ticket_types=ticket_types)
         self.assertEqual(result["bugfix"], 1)
         self.assertEqual(result["feature"], 1)
 

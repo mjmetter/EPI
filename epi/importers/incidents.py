@@ -172,7 +172,7 @@ submitted_date: ""
 
 # --- Delivery Velocity (not populated by incident data) ---
 deployment_frequency: null    # Fill manually or via CI data
-features_shipped: null        # Fill manually or via Jira
+features_shipped: null        # Fill manually or via your issue tracker (Jira, Linear, etc.)
 
 # --- Delivery Quality (not populated by incident data) ---
 rollbacks: null               # Fill manually

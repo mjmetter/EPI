@@ -18,7 +18,7 @@ deployment_frequency: 0       # Production deployments this month
                               # Include: rollbacks that went to prod (they still count as deploys)
                               # Exclude: staging/dev deployments
 
-features_shipped: 0           # Jira tickets moved to "Done" with production code this month
+features_shipped: 0           # Tickets moved to "Done" (Jira, Linear, etc.) with production code this month
                               # If unsure, use the count of tickets linked to merged MRs
 
 # ─── Delivery Quality ─────────────────────────────────────────────────────────
@@ -27,8 +27,8 @@ rollbacks: 0                  # Deployments that caused rollback or hotfix
                               # Used to calculate: change_failure_rate = rollbacks / deployment_frequency
 
 post_release_defects: 0       # Bug tickets opened within 14 days of a deployment
-                              # Source: Jira filter for bugs created in the last 14 days
-                              #         linked to a recent release
+                              # Source: issue-tracker filter (Jira, Linear, etc.) for bugs
+                              #         created in the last 14 days linked to a recent release
 
 # ─── Engineering Efficiency ────────────────────────────────────────────────────
 

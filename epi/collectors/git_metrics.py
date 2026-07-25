@@ -38,7 +38,13 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from epi.api.gitlab import fetch_group_projects, fetch_instance_projects, fetch_jira_issue_types, fetch_mrs_created
+from epi.api.gitlab import (
+    fetch_group_projects,
+    fetch_instance_projects,
+    fetch_jira_issue_types,
+    fetch_linear_issue_types,
+    fetch_mrs_created,
+)
 from epi.config import load_repos_config
 
 
@@ -170,9 +176,12 @@ def extract_tickets(commits: list[dict[str, str]]) -> list[str]:
     return sorted(tickets)
 
 
-# Jira issue type → classification category mapping.
-# Types not listed here fall through to regex classification.
-JIRA_TYPE_MAP: dict[str, str] = {
+# Issue-tracker type name → classification category mapping. Populated from
+# whichever tracker is configured (Jira issuetype, Linear label keywords —
+# see fetch_jira_issue_types / fetch_linear_issue_types), normalized to the
+# same Bug/Story/Epic vocabulary. Types not listed here fall through to regex
+# classification.
+ISSUE_TYPE_MAP: dict[str, str] = {
     "Bug": "bugfix",
     "Story": "feature",
     "Epic": "feature",
@@ -240,13 +249,14 @@ def calculate_focus_score(repo_path: str, commits: list[dict[str, str]]) -> dict
 
 def classify_commits(
     commits: list[dict[str, str]],
-    jira_types: dict[str, str] | None = None,
+    ticket_types: dict[str, str] | None = None,
 ) -> dict[str, int]:
-    """Classify commits by type based on Jira issue types (when available) or subject line keywords.
+    """Classify commits by type based on issue-tracker types (when available) or subject line keywords.
 
-    When jira_types is provided, commits referencing a known Jira ticket are classified
-    by the ticket's issue type (Bug→bugfix, Story/Epic→feature). Tickets with unmapped
-    types (e.g., Task) fall through to regex classification.
+    When ticket_types is provided (from Jira or Linear — see ISSUE_TYPE_MAP), commits
+    referencing a known ticket are classified by the ticket's type (Bug→bugfix,
+    Story/Epic→feature). Tickets with unmapped types (e.g., Task) fall through to
+    regex classification.
     """
     classes = {
         "feature": 0,
@@ -282,20 +292,20 @@ def classify_commits(
     for c in commits:
         s = c["subject"]
 
-        # Try Jira-based classification first
-        if jira_types:
+        # Try tracker-based classification first (Jira issuetype or Linear label)
+        if ticket_types:
             commit_tickets = re.findall(r"[A-Z]+-\d+", s)
-            jira_classified = False
+            ticket_classified = False
             for tid in commit_tickets:
-                issue_type = jira_types.get(tid)
+                issue_type = ticket_types.get(tid)
                 if issue_type:
-                    category = JIRA_TYPE_MAP.get(issue_type)
+                    category = ISSUE_TYPE_MAP.get(issue_type)
                     if category:
                         classes[category] += 1
-                        jira_classified = True
+                        ticket_classified = True
                         break
                     # Unmapped types (Task, etc.) fall through to regex
-            if jira_classified:
+            if ticket_classified:
                 continue
 
         # Regex fallback
@@ -317,14 +327,14 @@ def classify_commits(
     return classes
 
 
-def classify_mrs(titles: list[str], jira_types: dict[str, str] | None = None) -> dict[str, int]:
+def classify_mrs(titles: list[str], ticket_types: dict[str, str] | None = None) -> dict[str, int]:
     """Classify MR titles using the same patterns as classify_commits.
 
     Wraps titles as commit-like dicts and delegates to classify_commits
     to avoid duplicating regex patterns.
     """
     pseudo_commits = [{"subject": t} for t in titles if t]
-    return classify_commits(pseudo_commits, jira_types=jira_types)
+    return classify_commits(pseudo_commits, ticket_types=ticket_types)
 
 
 def calculate_bus_factor(repo_path: str, branch: str, trail_start: str, end: str) -> dict[str, int]:
@@ -512,8 +522,10 @@ def collect_single_repo(
     project_id: str = "",
     namespace: str = "",
     output_path: str = "",
+    issue_tracker: str = "jira",
     jira_instance: str = "",
     jira_token_env: str = "",
+    linear_token_env: str = "",
     category: str = "product",
 ) -> dict | None:
     """Collect metrics for a single repo. Returns the output dict."""
@@ -591,23 +603,27 @@ def collect_single_repo(
     if active_contributors > 0 and mrs_total > 0:
         mrs["per_engineer"] = round(mrs_total / active_contributors, 1)
 
-    # 6. Jira-based classification enrichment (optional)
-    jira_types: dict[str, str] = {}
-    if jira_instance and jira_token_env:
+    # 6. Issue-tracker-based classification enrichment (optional)
+    ticket_types: dict[str, str] = {}
+    if issue_tracker == "linear" and linear_token_env:
+        print("  Fetching Linear issue labels for ticket-based classification...", file=sys.stderr)
+        ticket_types = fetch_linear_issue_types(tickets, linear_token_env)
+        print(f"  Resolved {len(ticket_types)} ticket type(s) from Linear", file=sys.stderr)
+    elif jira_instance and jira_token_env:
         print("  Fetching Jira issue types for ticket-based classification...", file=sys.stderr)
-        jira_types = fetch_jira_issue_types(tickets, jira_instance, jira_token_env)
-        print(f"  Resolved {len(jira_types)} ticket type(s) from Jira", file=sys.stderr)
+        ticket_types = fetch_jira_issue_types(tickets, jira_instance, jira_token_env)
+        print(f"  Resolved {len(ticket_types)} ticket type(s) from Jira", file=sys.stderr)
 
-    # 7. Commit classification (Jira types override regex when available)
+    # 7. Commit classification (tracker types override regex when available)
     print("  Classifying commits...", file=sys.stderr)
-    classification = classify_commits(all_commits, jira_types=jira_types or None)
+    classification = classify_commits(all_commits, ticket_types=ticket_types or None)
     print(f"  Classification: {classification}", file=sys.stderr)
 
     # 8. MR classification (informational — kept for detail page, not used for rework_rate)
     mr_classification = None
     if mrs.get("gitlab_api_used") and mrs.get("titles"):
         mr_titles: list[str] = mrs["titles"]  # type: ignore[assignment]
-        mr_classification = classify_mrs(mr_titles, jira_types=jira_types or None)
+        mr_classification = classify_mrs(mr_titles, ticket_types=ticket_types or None)
         print(f"  MR classification: {mr_classification}", file=sys.stderr)
 
     # Rework rate — always commit-level
@@ -663,9 +679,10 @@ def collect_single_repo(
         "focus_score": focus,
         "commit_classification": classification,
         "classification_meta": {
-            "jira_resolved": len(jira_types),
+            "issue_tracker": issue_tracker if ticket_types else "",
+            "ticket_type_resolved": len(ticket_types),
             "total_commits": len(all_commits),
-            "jira_classification_rate": round(len(jira_types) / len(all_commits) * 100, 1) if all_commits else 0.0,
+            "ticket_classification_rate": round(len(ticket_types) / len(all_commits) * 100, 1) if all_commits else 0.0,
         },
         "mr_classification": mr_classification,
         "rework_rate": {
@@ -856,6 +873,10 @@ def main() -> None:
 
         jira_instance = product_config.get("jira_instance", "")
         jira_token_env = product_config.get("jira_token_env", "")
+        linear_token_env = product_config.get("linear_token_env", "")
+        # Explicit `issue_tracker` wins; otherwise infer from whichever tracker's
+        # config is present (defaults to jira for backward compatibility).
+        issue_tracker = product_config.get("issue_tracker", "linear" if linear_token_env else "jira")
 
         for repo_conf, inst, tok in valid_tuples:
             branch = args.branch or repo_conf.get("branch", "")
@@ -880,8 +901,10 @@ def main() -> None:
                 project_id=project_id,
                 namespace=namespace,
                 output_path=output_path,
+                issue_tracker=issue_tracker,
                 jira_instance=jira_instance,
                 jira_token_env=jira_token_env,
+                linear_token_env=linear_token_env,
                 category=repo_category,
             )
 

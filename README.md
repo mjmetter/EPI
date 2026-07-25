@@ -153,6 +153,12 @@ products:
 Tokens and instance URLs are read from environment variables — see
 [`.env.example`](.env.example) for the full list. Never commit real tokens.
 
+Ticket-type lookup (used to sharpen commit classification into feature/bugfix) is
+optional and supports either **Jira** (`jira_instance` + `jira_token_env`) or
+**Linear** (`linear_token_env`) per product — see the `app_linear` example in
+[`repos.yaml.example`](repos.yaml.example). Without either configured, classification
+falls back to regex matching on the commit subject.
+
 ## Development
 
 ```bash
@@ -195,7 +201,7 @@ python3 -m pytest tests/test_productivity_report.py::TestChatIntegration -v
 |--------|-----------------|
 | Commits | Total + per contributor |
 | MRs Merged | Via GitLab API |
-| Unique Tickets | Jira refs in commit messages |
+| Unique Tickets | Issue-tracker refs (Jira, Linear, etc.) in commit messages |
 | Lines Changed | Added / removed |
 | Focus Score | % commits changing < 50 lines |
 | Commit Classification | feature / bugfix / test / tooling / maintenance / docs |
@@ -209,7 +215,7 @@ python3 -m pytest tests/test_productivity_report.py::TestChatIntegration -v
 
 | Metric | What It Measures |
 |--------|-----------------|
-| Ticket Reference Rate | % commits linking to a Jira ticket |
+| Ticket Reference Rate | % commits linking to an issue-tracker ticket |
 | Feature-Test Coupling | % feature commits paired with a test commit |
 | Test-to-Code Ratio | Test files / source files |
 | Commit Message Quality | % messages with a meaningful subject line |
@@ -230,3 +236,10 @@ Each metric scores 0–100 via band interpolation. No composite score — each m
 Band thresholds: **Elite** 90–100 · **Happy** 70–89 · **Acceptable** 50–69 · **Concerning** 0–49
 
 See [SCORING_DESIGN.md](SCORING_DESIGN.md) for threshold rationale and scoring mechanics.
+
+## License
+
+Copyright © Michael Metternich. Licensed under the [MIT License](LICENSE) — free
+to use, modify, and self-host, with attribution retained per the license terms.
+See [CONTRIBUTING.md](CONTRIBUTING.md#license--contributor-agreement) for the
+terms that apply to contributions.

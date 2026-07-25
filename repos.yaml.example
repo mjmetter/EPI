@@ -10,11 +10,20 @@
 products:
 
   # ── Simple product: an explicit list of repos on one GitLab instance ────────
+  # Issue-tracker ticket-type lookup is optional and only used to sharpen commit
+  # classification (Bug/Story/Epic -> bugfix/feature). Without it, classification
+  # falls back to regex on the commit subject. Two trackers are supported:
+  #   - Jira: set jira_instance + jira_token_env.
+  #   - Linear: set linear_token_env (no instance URL needed, see app_linear below).
+  # `issue_tracker` picks which one to use; inferred automatically if omitted
+  # (linear_token_env present -> linear, else jira).
   app_a:
     display_name: "App A"
     gitlab_instance: https://githost.example.com
     token_env: GITLAB_TOKEN            # env var holding the API token
+    issue_tracker: jira                # optional; "jira" or "linear"
     jira_instance: https://your-org.atlassian.net   # optional, for ticket types
+    jira_token_env: JIRA_TOKEN
     repos:
       - name: service-one
         project_id: "123"              # GitLab numeric project ID
@@ -28,6 +37,20 @@ products:
         path: /path/to/local/clone-two
         branch: main
         ticket_prefix: APPA
+
+  # Product using Linear instead of Jira for ticket-type classification.
+  app_linear:
+    display_name: "App Linear"
+    gitlab_instance: https://githost.example.com
+    token_env: GITLAB_TOKEN
+    linear_token_env: LINEAR_TOKEN     # issue_tracker inferred as "linear"
+    repos:
+      - name: service-three
+        project_id: "125"
+        namespace: org/group/service-three
+        path: /path/to/local/clone-three
+        branch: main
+        ticket_prefix: ENG             # Linear team key used in commit messages
 
   # ── Instance-wide product: every repo under one or more groups ──────────────
   app_b:

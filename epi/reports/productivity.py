@@ -1448,9 +1448,9 @@ def _render_health_section(health: dict[str, Any], total_commits: int = 0) -> st
     readiness_cells = "".join(
         [
             _metric_cell(
-                "Jira Ref Rate",
+                "Ticket Ref Rate",
                 _num("ticket_reference_rate", "{:.1f}%"),
-                "% of commits that reference a Jira ticket in the message.",
+                "% of commits that reference an issue-tracker ticket (Jira, Linear, etc.) in the message.",
             ),
             _metric_cell(
                 "Feature-Test Coupling",
@@ -2829,10 +2829,10 @@ def render_repo_page(
         (
             "ai_readiness",
             "ticket_reference_rate",
-            "Jira Ref Rate (%)",
-            "% of non-merge commits whose subject line contains a Jira ticket reference "
-            "(e.g. PROJ-123). Measures how consistently the team links code changes to "
-            "planned work. Calculated from git log over the month.",
+            "Ticket Ref Rate (%)",
+            "% of non-merge commits whose subject line contains an issue-tracker ticket "
+            "reference (e.g. PROJ-123, from Jira, Linear, etc.). Measures how consistently "
+            "the team links code changes to planned work. Calculated from git log over the month.",
         ),
         (
             "ai_readiness",

@@ -71,6 +71,74 @@ def fetch_jira_issue_types(
     return result
 
 
+# ─── LINEAR API CLIENT ────────────────────────────────────────────────────────
+
+LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
+
+# Linear has no fixed "issue type" enum like Jira's issuetype field — teams
+# label issues freely. Match label names against common keywords and normalize
+# to the same vocabulary as JIRA_TYPE_MAP (Bug/Story/Epic) so downstream
+# classification logic stays tracker-agnostic.
+_LINEAR_LABEL_KEYWORDS: list[tuple[str, str]] = [
+    ("bug", "Bug"),
+    ("feature", "Story"),
+    ("story", "Story"),
+    ("epic", "Epic"),
+]
+
+
+def fetch_linear_issue_types(
+    ticket_ids: list[str],
+    token_env: str,
+) -> dict[str, str]:
+    """Batch-fetch Linear issue labels for a list of ticket identifiers (e.g. "ENG-123").
+
+    Returns a dict mapping ticket ID → normalized type name ("Bug"/"Story"/"Epic"),
+    matching fetch_jira_issue_types' output vocabulary. Issues with no matching
+    label keyword, or that fail to resolve, are silently omitted.
+    """
+    token = os.environ.get(token_env, "")
+    if not token:
+        return {}
+
+    result: dict[str, str] = {}
+    for i, tid in enumerate(ticket_ids):
+        if i > 0 and len(ticket_ids) > 20:
+            time.sleep(0.05)  # rate limiting for large batches
+
+        payload = {
+            "query": "query($id: String!) { issue(id: $id) { labels { nodes { name } } } }",
+            "variables": {"id": tid},
+        }
+        try:
+            req = Request(
+                LINEAR_GRAPHQL_URL,
+                data=json.dumps(payload).encode(),
+                headers={
+                    "Authorization": token,
+                    "Content-Type": "application/json",
+                },
+            )
+            with urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+
+            issue = (data.get("data") or {}).get("issue")
+            if not issue:
+                continue
+
+            label_names = [n["name"].lower() for n in issue.get("labels", {}).get("nodes", [])]
+            for keyword, mapped_type in _LINEAR_LABEL_KEYWORDS:
+                if any(keyword in name for name in label_names):
+                    result[tid] = mapped_type
+                    break
+
+        except (URLError, json.JSONDecodeError, OSError) as e:
+            print(f"  Warning: Linear lookup failed for {tid}: {e}", file=sys.stderr)
+            continue
+
+    return result
+
+
 # ─── GITLAB API CLIENTS ───────────────────────────────────────────────────────
 
 
