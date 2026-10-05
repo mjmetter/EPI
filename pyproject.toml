@@ -11,6 +11,8 @@ dependencies = [
 [project.scripts]
 collect-git-metrics          = "epi.collectors.git_metrics:main"
 collect-repo-health          = "epi.collectors.repo_health:main"
+collect-dora-metrics         = "epi.collectors.dora:main"
+record-dora-event            = "epi.collectors.dora:record_event_main"
 score-epi                    = "epi.scoring:main"
 generate-productivity-report = "epi.reports.productivity:main"
 import-incidents-csv         = "epi.importers.incidents:main"

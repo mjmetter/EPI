@@ -241,20 +241,20 @@ Charts marked "manual" in the header rely on manual input and may be incomplete.
 **Delivery Velocity**
 - Commits per Engineer — non-bot commits / headcount (automated)
 - MRs per Engineer — merge requests merged / headcount (automated)
-- Deployment Frequency — deployments/month (manual)
+- Deployment Frequency — deployments/month (measured by collect-dora-metrics, else manual)
 - Features Shipped — commits classified as feat/add/implement / headcount (automated)
 
 **Delivery Quality**
-- Change Failure Rate — % deployments causing incidents (manual)
+- Change Failure Rate — % deployments rolled back or hotfixed (measured by collect-dora-metrics, else manual)
 - Post-Release Defect Rate — % features with post-release defects (manual, often missing)
 - Rework Rate — % commits that revert or redo recent work (automated)
 
 **Engineering Efficiency**
-- Lead Time in Days — commit-to-production days (manual, currently missing)
+- Lead Time in Days — median commit-to-production days (measured by collect-dora-metrics, else manual)
 - Cycle Delivery Accuracy — % planned work delivered on time (manual, currently missing)
 
 **Engineering Health**
-- MTTR in Hours — mean time to restore after incident (manual, often missing)
+- MTTR in Hours — mean time to restore after sev1/sev2 incidents (measured by collect-dora-metrics, else manual)
 - Bus Factor — min engineers whose loss halts a repo (automated)
 - Knowledge Distribution — % repos with multiple active contributors (automated)
 
@@ -1630,31 +1630,29 @@ _CATEGORY_DESCRIPTIONS: dict[str, str] = {
         "<strong>How fast the team ships.</strong> "
         "Commits/Engineer and MRs/Engineer are collected automatically from Git. "
         "Features Shipped is derived from commit classification (feat/add/implement prefixes). "
-        "Deployment Frequency requires manual input in the monthly YAML — "
-        "it will show &#8212; without it."
+        "Deployment Frequency is measured from deployment events by collect-dora-metrics, "
+        "or entered manually in the monthly YAML — it will show &#8212; without either."
     ),
     "Delivery Quality": (
         "<strong>How reliable the output is.</strong> "
         "Rework Rate is automated (reverts and fix-commits). "
-        "Change Failure Rate and Post-Release Defect Rate require manual input "
-        "(incident tracking and release defect logs) — they will show &#8212; until added to the YAML. "
+        "Change Failure Rate is measured from rollbacks and hotfix deployments by collect-dora-metrics, "
+        "or entered manually. Post-Release Defect Rate requires manual input from release defect logs. "
+        "Either shows &#8212; until its data is available. "
         "<strong>Currently missing for most products:</strong> Post-Release Defect Rate."
     ),
     "Engineering Efficiency": (
         "<strong>How smoothly work flows from commit to production.</strong> "
-        "Both metrics — Lead Time in Days and Cycle Delivery Accuracy — "
-        "require manual input (deployment timestamps and sprint planning data). "
-        "They will show &#8212; until added to the monthly YAML. "
-        "<strong>Currently missing for all products:</strong> Lead Time in Days, "
-        "Cycle Delivery Accuracy."
+        "Lead Time in Days is measured by collect-dora-metrics (median time from commit to the "
+        "deployment that shipped it), or entered manually. Cycle Delivery Accuracy requires manual "
+        "input from sprint planning data. Either shows &#8212; until its data is available."
     ),
     "Engineering Health": (
         "<strong>Team sustainability and resilience.</strong> "
         "Bus Factor and Knowledge Distribution are automated from Git "
         "(contributor spread across repos). "
-        "MTTR (Mean Time to Restore) requires manual input from incident tracking "
-        "and will show &#8212; without it. "
-        "<strong>Currently missing for most products:</strong> MTTR Hours."
+        "MTTR (Mean Time to Restore) is measured from incident open/resolve events by "
+        "collect-dora-metrics, or entered manually, and shows &#8212; without either."
     ),
 }
 

@@ -7,6 +7,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from urllib.error import URLError
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 # ─── JIRA API CLIENT ─────────────────────────────────────────────────────────
@@ -384,3 +385,101 @@ def fetch_mr_ai_usage(
             result["none"] += 1
 
     return result
+
+
+# ─── GITLAB DORA EVENT SOURCES ───────────────────────────────────────────────
+
+
+def _gitlab_get_all(url: str, token: str, what: str) -> list[dict] | None:
+    """GET every page of a GitLab list endpoint. Returns None if any request fails."""
+    items: list[dict] = []
+    page = 1
+    sep = "&" if "?" in url else "?"
+    while True:
+        try:
+            req = Request(f"{url}{sep}per_page=100&page={page}", headers={"PRIVATE-TOKEN": token})
+            with urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read())
+        except (URLError, json.JSONDecodeError, OSError) as e:
+            print(f"  GitLab API error fetching {what}: {e}", file=sys.stderr)
+            return None
+        if not isinstance(data, list) or not data:
+            break
+        items.extend(data)
+        if len(data) < 100:
+            break
+        page += 1
+    return items
+
+
+def fetch_deployments(
+    gitlab_instance: str,
+    token_env: str,
+    project_id: str,
+    environment: str,
+    finished_after: str,
+    finished_before: str,
+) -> list[dict] | None:
+    """Fetch successful deployments to one environment, oldest first.
+
+    Each item is the raw GitLab deployment object (sha, ref, finished_at, ...).
+    Timestamps are ISO-8601. Returns None when the API is unreachable or no
+    token is configured, so callers can tell "no deployments" from "unknown".
+    """
+    token = os.environ.get(token_env, "") if token_env else os.environ.get("GITLAB_TOKEN", "")
+    if not token:
+        print(f"  Warning: no token found in env var '{token_env}' — cannot fetch deployments", file=sys.stderr)
+        return None
+    url = (
+        f"{gitlab_instance}/api/v4/projects/{project_id}/deployments"
+        f"?environment={quote(environment)}&status=success"
+        f"&finished_after={quote(finished_after)}&finished_before={quote(finished_before)}"
+        f"&order_by=finished_at&sort=asc"
+    )
+    return _gitlab_get_all(url, token, f"deployments for project {project_id}")
+
+
+def fetch_compare_commits(
+    gitlab_instance: str,
+    token_env: str,
+    project_id: str,
+    from_sha: str,
+    to_sha: str,
+) -> list[dict] | None:
+    """Return the commits reachable from to_sha but not from from_sha (GitLab compare API)."""
+    token = os.environ.get(token_env, "") if token_env else os.environ.get("GITLAB_TOKEN", "")
+    if not token:
+        return None
+    url = (
+        f"{gitlab_instance}/api/v4/projects/{project_id}/repository/compare"
+        f"?from={quote(from_sha)}&to={quote(to_sha)}&straight=true"
+    )
+    try:
+        req = Request(url, headers={"PRIVATE-TOKEN": token})
+        with urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+    except (URLError, json.JSONDecodeError, OSError) as e:
+        print(f"  GitLab API error comparing {from_sha[:8]}..{to_sha[:8]}: {e}", file=sys.stderr)
+        return None
+    commits = data.get("commits") if isinstance(data, dict) else None
+    return commits if isinstance(commits, list) else None
+
+
+def fetch_incident_issues(
+    gitlab_instance: str,
+    token_env: str,
+    project_id: str,
+    created_after: str,
+    created_before: str,
+) -> list[dict] | None:
+    """Fetch GitLab incidents (issues of type "incident") created in a window."""
+    token = os.environ.get(token_env, "") if token_env else os.environ.get("GITLAB_TOKEN", "")
+    if not token:
+        print(f"  Warning: no token found in env var '{token_env}' — cannot fetch incidents", file=sys.stderr)
+        return None
+    url = (
+        f"{gitlab_instance}/api/v4/projects/{project_id}/issues"
+        f"?issue_type=incident&state=all"
+        f"&created_after={quote(created_after)}&created_before={quote(created_before)}"
+    )
+    return _gitlab_get_all(url, token, f"incidents for project {project_id}")

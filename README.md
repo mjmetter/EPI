@@ -68,6 +68,8 @@ reports/productivity_{product}_{repo}.html         # Repo: full history + activi
 |---------|--------|---------|
 | `collect-git-metrics` | `epi.collectors.git_metrics` | Collects 9 git/GitLab metrics per repo → `products/<product>/YYYY-MM_<repo>.json` |
 | `collect-repo-health` | `epi.collectors.repo_health` | Collects AI Readiness + AI Adoption metrics → `products/<product>/health-YYYY-MM_<repo>.json` |
+| `collect-dora-metrics` | `epi.collectors.dora` | Measures deployment frequency, change failure rate, lead time and MTTR from deployment/incident events → `products/<product>/manual-YYYY-MM.yaml` |
+| `record-dora-event` | `epi.collectors.dora` | Appends a deployment or incident event from CI/CD → `products/<product>/dora-events.jsonl` |
 | `score-epi` | `epi.scoring` | Scoring engine — reads metrics JSON + manual YAML, applies band interpolation |
 | `generate-productivity-report` | `epi.reports.productivity` | Productivity dashboard — per-engineer trends, drilldowns, chat |
 | `import-incidents-csv` | `epi.importers.incidents` | Converts incident CSV exports into manual YAML input files |
@@ -80,7 +82,8 @@ All commands are installed by `pip install -e .` (run via `make setup`).
 ```
 repos.yaml ──→ collect-git-metrics ──→ products/<product>/YYYY-MM_<repo>.json ──────┐
 repos.yaml ──→ collect-repo-health ──→ products/<product>/health-YYYY-MM_<repo>.json ┤
-import-incidents-csv / import-uptime ──→ products/<product>/manual-YYYY-MM.yaml ────┤
+repos.yaml ──→ collect-dora-metrics ──→ products/<product>/manual-YYYY-MM.yaml ──────┤
+import-incidents-csv / import-uptime ──→ products/<product>/manual-YYYY-MM.yaml ─────┤
                                                                                       ▼
                                                                                 score-epi
                                                                                       │
@@ -111,7 +114,8 @@ engineering-productivity-index/
 │   │   └── gitlab.py                  # GitLab REST helpers
 │   ├── collectors/
 │   │   ├── git_metrics.py             # collect-git-metrics logic
-│   │   └── repo_health.py             # collect-repo-health logic
+│   │   ├── repo_health.py             # collect-repo-health logic
+│   │   └── dora.py                    # collect-dora-metrics / record-dora-event logic
 │   ├── importers/
 │   │   ├── incidents.py               # import-incidents-csv logic
 │   │   └── uptime.py                  # import-uptime logic
@@ -121,7 +125,8 @@ engineering-productivity-index/
 │   └── <product>/
 │       ├── YYYY-MM_<repo>.json        # Git metrics (auto — scheduled CI)
 │       ├── health-YYYY-MM_<repo>.json # AI readiness/adoption (auto — scheduled CI)
-│       └── manual-YYYY-MM.yaml        # Deployments, incidents, MTTR (manager-provided)
+│       ├── dora-events.jsonl          # Deployment/incident events (record-dora-event)
+│       └── manual-YYYY-MM.yaml        # Deployments, incidents, MTTR (measured or manager-provided)
 └── reports/                           # Git-ignored; regenerated from products/
     ├── productivity.html
     ├── productivity_<product>.html
@@ -228,6 +233,43 @@ python3 -m pytest tests/test_productivity_report.py::TestChatIntegration -v
 | AI-Assisted Commits | % commits with Claude/Cursor co-authorship markers |
 | Cursor Tab / Composer | Line attribution from Cursor analytics API |
 | Co-authored MRs | MRs with AI co-author labels in GitLab |
+
+### DORA Metrics (`collect-dora-metrics`)
+
+Measures the four DORA metrics from real events instead of monthly estimates, and
+writes them into `products/<product>/manual-YYYY-MM.yaml` — the file `score-epi`
+already reads. Fields it measured are listed under `measured:` (the dashboard then
+stops marking those metrics as manual); every other field in the file is kept.
+
+| Metric | How it is measured |
+|--------|-------------------|
+| Deployment Frequency | Successful deployments to the production environment in the month |
+| Change Failure Rate | Deployments that were a rollback (redeploy of an older SHA, or flagged `--rollback`) or a hotfix (ref matches `hotfix_ref_pattern`), divided by deployments |
+| Lead Time | Median time from each commit's author date to the deployment that first shipped it (merge commits excluded) |
+| MTTR | Mean open → resolve time of sev1 + sev2 incidents opened in the month |
+| Incidents | Incidents opened in the month, by severity |
+
+Each product picks its event sources under `dora:` in `repos.yaml` (see
+`repos.yaml.example`):
+
+- **`gitlab`**: deployments from GitLab's Deployments API (environment `production`
+  by default), lead time from the compare API, incidents from issues of type
+  *incident* (severity from `severity::1` / `sev1` / `S1` / `P0` labels or the
+  incident severity field).
+- **`events`**: an append-only `products/<product>/dora-events.jsonl` written by
+  `record-dora-event`, for teams that deploy outside GitLab environments or track
+  incidents elsewhere. Lead time uses the local clone of each repo.
+
+```bash
+# In the deploy job of any CI/CD pipeline:
+record-dora-event --product app_b deployment --repo service-one --sha "$CI_COMMIT_SHA" --ref "$CI_COMMIT_REF_NAME"
+# From an incident tool webhook or by hand:
+record-dora-event --product app_b incident --id INC-42 --action opened --severity sev1
+record-dora-event --product app_b incident --id INC-42 --action resolved
+
+# Monthly, before score-epi:
+collect-dora-metrics --product app_a --month 2026-03 [--dry-run]
+```
 
 ### EPI Scoring (`score-epi`)
 

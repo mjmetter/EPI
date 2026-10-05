@@ -38,6 +38,20 @@ products:
         branch: main
         ticket_prefix: APPA
 
+    # DORA metrics measured by `collect-dora-metrics` (optional; without this
+    # block, deployments are read from GitLab's "production" environment and
+    # incidents are left to manual input).
+    dora:
+      deployments:
+        source: gitlab                 # gitlab = GitLab Deployments API; events = dora-events.jsonl
+        environment: production        # GitLab environment (or event `environment`) to count
+        hotfix_ref_pattern: "^hotfix[/_-]"   # deploys from matching refs count as failures
+        lookback_days: 90              # history used to detect rollbacks and bound lead time
+      incidents:
+        source: gitlab                 # gitlab = issues of type "incident"; events = dora-events.jsonl
+        project_id: "123"              # project holding the incident issues (gitlab only)
+        default_severity: sev3         # when an incident has no severity label/field
+
   # Product using Linear instead of Jira for ticket-type classification.
   app_linear:
     display_name: "App Linear"
@@ -63,6 +77,12 @@ products:
       - org/app-b/archived            # subtrees to skip
     support_repos:                    # repos shown but collapsed (infra/tooling)
       - app-b-ci
+    # Deployments and incidents recorded from CI via `record-dora-event`
+    dora:
+      deployments:
+        source: events
+      incidents:
+        source: events
 
   # ── Multi-source product: repos spanning more than one instance/group ───────
   app_c:

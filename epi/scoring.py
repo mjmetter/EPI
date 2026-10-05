@@ -151,6 +151,16 @@ _MANUAL_SOURCE_METRICS: frozenset[str] = frozenset(
     }
 )
 
+# Manual-YAML fields each manual-source metric is derived from. When all of them
+# appear in the YAML's `measured` list (written by collect-dora-metrics), the
+# metric is measured rather than hand-entered.
+_MEASURED_INPUTS: dict[str, frozenset[str]] = {
+    "deployment_frequency": frozenset({"deployment_frequency"}),
+    "change_failure_rate": frozenset({"deployment_frequency", "rollbacks"}),
+    "lead_time_days": frozenset({"lead_time_median_days"}),
+    "mttr_hours": frozenset({"mttr_hours"}),
+}
+
 
 def score_metric(metric_name: str, value: float) -> dict:
     """Score a single metric value against its bands using linear interpolation."""
@@ -623,6 +633,7 @@ def score_product(product: str, month: str, base_dir: Path, repos_config: dict |
     # Load data
     git_data = load_git_metrics(product_dir, month)
     manual_data = load_manual_input(product_dir, month)
+    measured_fields = set(manual_data.get("measured") or [])
 
     # Load per-repo data
     repos = score_repos(product, month, base_dir)
@@ -679,7 +690,9 @@ def score_product(product: str, month: str, base_dir: Path, repos_config: dict |
             else:
                 direction = "declined"
 
-        is_manual = metric_name in _MANUAL_SOURCE_METRICS or (
+        inputs = _MEASURED_INPUTS.get(metric_name)
+        is_measured = inputs is not None and inputs <= measured_fields
+        is_manual = (metric_name in _MANUAL_SOURCE_METRICS and not is_measured) or (
             metric_name == "features_shipped" and manual_data.get("features_shipped") is not None
         )
 

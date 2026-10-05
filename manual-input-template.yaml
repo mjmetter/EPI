@@ -3,6 +3,10 @@
 # Fill in this template once per product per month for metrics that
 # cannot yet be automated. Takes ~5 minutes.
 #
+# deployment_frequency, rollbacks, lead_time_median_days, incidents and
+# mttr_hours can be measured instead: run `collect-dora-metrics` and it fills
+# them in (listing them under `measured:`) while keeping everything else here.
+#
 # Save as: products/<product>/manual-YYYY-MM.yaml
 # Example: products/app_a/manual-2026-03.yaml
 
@@ -34,7 +38,7 @@ post_release_defects: 0       # Bug tickets opened within 14 days of a deploymen
 
 lead_time_median_days: 0.0    # Median days from first commit to production deployment
                               # For manual input: estimate based on typical ticket flow
-                              # Phase 2 will automate this from git + CI data
+                              # Measured automatically by collect-dora-metrics
 
 cycle: ""                     # Optional: which cycle this data belongs to (e.g., C2, C3)
                               # Used to label cycle_delivery_accuracy in reports.

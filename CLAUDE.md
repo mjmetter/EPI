@@ -11,7 +11,7 @@ HTML productivity dashboard. See [README.md](README.md) for the full overview.
 ## Layout
 
 - `epi/` — the installable Python package (`pip install -e .`)
-  - `collectors/` — `collect-git-metrics`, `collect-repo-health`
+  - `collectors/` — `collect-git-metrics`, `collect-repo-health`, `collect-dora-metrics` (+ `record-dora-event`)
   - `importers/` — CSV/uptime → manual YAML
   - `reports/productivity.py` — the dashboard generator
   - `scoring.py` — band-interpolation scoring engine
