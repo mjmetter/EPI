@@ -4,7 +4,7 @@ Productivity Dashboard — standalone HTML report for exec buy-in.
 Produces three page types showing 4 per-engineer metrics across all products:
   - reports/productivity.html                          — overview: all products, all months
   - reports/productivity_{product}.html                — product drilldown: one line per repo
-  - reports/productivity_{product}_{repo}.html         — repo drilldown: single repo + contributors
+  - reports/productivity_{product}_{repo}.html         — repo drilldown: single repo (named contributors only with --show-contributors)
 
 Usage:
     python3 generate-productivity-report.py
@@ -282,6 +282,8 @@ Commits are categorised by prefix/keyword: feature, bugfix, test, tooling, maint
 - Reference actual values from the current page data when answering
 - Distinguish between automated metrics (reliable) and manual metrics (approximate, may be incomplete)
 - Explain what trends mean for engineering effectiveness; suggest concrete, actionable improvements
+- Discuss teams and systems, never individuals: do not rank, compare or evaluate individual engineers.
+  Per-engineer metrics are team averages (team total / headcount), not personal scores
 - Be concise — 2–4 sentences unless more detail is requested
 - You are read-only — you cannot modify any data"""
 
@@ -921,6 +923,8 @@ def _build_prod_chat_context(page_type: str, **kwargs: Any) -> str:
         latest_data = kwargs.get("latest_data")
         if latest_data:
             ctx["commit_classification"] = latest_data.get("commit_classification", {})
+        # Individual names reach the chat only when the operator opted in (--show-contributors)
+        if latest_data and kwargs.get("show_contributors"):
             top_contribs = sorted(
                 latest_data.get("commits", {}).get("per_contributor", {}).items(),
                 key=lambda x: x[1],
@@ -1201,46 +1205,6 @@ def _chart_js_dual_axis(
 </script>"""
 
 
-def _bar_chart_js(chart_id: str, labels: list[str], data: list[float], colour: str) -> str:
-    """Render a horizontal bar chart for per-contributor commits."""
-    data_json = json.dumps(data)
-    labels_json = json.dumps(labels)
-    return f"""<script>
-(function() {{
-  var ctx = document.getElementById('{chart_id}').getContext('2d');
-  window._charts = window._charts || {{}};
-  window._charts['{chart_id}'] = new Chart(ctx, {{
-    type: 'bar',
-    data: {{
-      labels: {labels_json},
-      datasets: [{{
-        label: 'Commits',
-        data: {data_json},
-        backgroundColor: '{colour}88',
-        borderColor: '{colour}',
-        borderWidth: 1
-      }}]
-    }},
-    options: {{
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {{
-        legend: {{ display: false }},
-        tooltip: {{ backgroundColor: '#181c25', titleColor: '#eef0f5', bodyColor: '#8890a4',
-                   borderColor: '#252a36', borderWidth: 1,
-                   itemSort: function(a, b) {{ return b.parsed.y - a.parsed.y; }} }}
-      }},
-      scales: {{
-        x: {{ beginAtZero: true, ticks: {{ color: '#8890a4' }}, grid: {{ color: '#252a36' }} }},
-        y: {{ ticks: {{ color: '#8890a4' }}, grid: {{ color: 'transparent' }} }}
-      }}
-    }}
-  }});
-}})();
-</script>"""
-
-
 def _stacked_bar_chart_js(chart_id: str, labels: list[str], datasets: list[dict[str, Any]]) -> str:
     """Render a stacked vertical bar chart (e.g. AI spend by tool)."""
     datasets_json = json.dumps(datasets)
@@ -1337,8 +1301,12 @@ def _yoy_badge(
 # ─── ACTIVITY SECTION RENDERER ───────────────────────────────────────────────
 
 
-def _render_activity_section(data: dict[str, Any]) -> str:
-    """Render commit classification bar + top contributors card from a repo JSON dict."""
+def _render_activity_section(data: dict[str, Any], show_contributors: bool = False) -> str:
+    """Render the commit classification bar from a repo JSON dict.
+
+    The Top Contributors card ranks named individuals by commit count, so it is
+    only rendered when show_contributors is set (--show-contributors).
+    """
     classification = data.get("commit_classification", {})
     if not any(classification.values()):
         return ""
@@ -1371,6 +1339,19 @@ def _render_activity_section(data: dict[str, Any]) -> str:
             f"display:inline-block'></span>{cat} {count}</span> "
         )
 
+    classification_html = (
+        f'<div style=\'font-family:"Barlow Condensed",sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:.05em;'
+        f"text-transform:uppercase;color:var(--muted);margin-bottom:8px'>Commit Classification</div>"
+        f"<div style='display:flex;height:20px;border-radius:2px;overflow:hidden;gap:1px;margin-bottom:8px'>"
+        f"{bar_segments}</div>"
+        f"<div style='display:flex;flex-wrap:wrap;gap:8px'>{legend_items}</div>"
+    )
+    if not show_contributors:
+        return (
+            f"<div class='chart-card' style='margin-top:24px'><h2>Activity Breakdown</h2>"
+            f"<div>{classification_html}</div></div>"
+        )
+
     per_contrib = data.get("commits", {}).get("per_contributor", {})
     commits_total = data.get("commits", {}).get("total", 0) or 1
     top_contribs = sorted(per_contrib.items(), key=lambda x: x[1], reverse=True)[:10]
@@ -1392,13 +1373,7 @@ def _render_activity_section(data: dict[str, Any]) -> str:
         f"<div class='chart-card' style='margin-top:24px'>"
         f"<h2>Activity Breakdown</h2>"
         f"<div style='display:grid;grid-template-columns:1fr 1fr;gap:24px'>"
-        f"<div>"
-        f'<div style=\'font-family:"Barlow Condensed",sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:.05em;'
-        f"text-transform:uppercase;color:var(--muted);margin-bottom:8px'>Commit Classification</div>"
-        f"<div style='display:flex;height:20px;border-radius:2px;overflow:hidden;gap:1px;margin-bottom:8px'>"
-        f"{bar_segments}</div>"
-        f"<div style='display:flex;flex-wrap:wrap;gap:8px'>{legend_items}</div>"
-        f"</div>"
+        f"<div>{classification_html}</div>"
         f"<div>"
         f'<div style=\'font-family:"Barlow Condensed",sans-serif;font-size:0.72rem;font-weight:600;letter-spacing:.05em;'
         f"text-transform:uppercase;color:var(--muted);margin-bottom:8px'>Top Contributors</div>"
@@ -2676,8 +2651,12 @@ def render_repo_page(
     display_name: str,
     base_dir: Path,
     months: list[str],
+    show_contributors: bool = False,
 ) -> str:
-    """Build productivity_{product}_{repo}.html — single repo + contributor bar chart."""
+    """Build productivity_{product}_{repo}.html — single repo drilldown.
+
+    Named per-person commit counts are shown only when show_contributors is set.
+    """
     product_dir = base_dir / "products" / product
 
     # Pre-load each month's data once — reused across all 4 metric charts and activity section.
@@ -2930,7 +2909,7 @@ def render_repo_page(
             health_m = month_health[m]
             section_inner = ""
             if data_m:
-                section_inner += _render_activity_section(data_m)
+                section_inner += _render_activity_section(data_m, show_contributors=show_contributors)
             if health_m:
                 total_commits_m = data_m.get("commits", {}).get("total", 0) if data_m else 0
                 section_inner += _render_health_section(health_m, total_commits=total_commits_m)
@@ -2966,6 +2945,7 @@ def render_repo_page(
         months=months,
         month_metrics=month_metrics,
         latest_data=latest_data,
+        show_contributors=show_contributors,
     )
     return _html_page(
         f"{display_name} / {repo}",
@@ -3000,6 +2980,13 @@ def main(argv: list[str] | None = None) -> None:
         default=None,
         help="Directory containing repos.yaml and products/ (default: repo root). "
         "Use --base-dir examples to render the bundled synthetic dataset.",
+    )
+    parser.add_argument(
+        "--show-contributors",
+        action="store_true",
+        help="Show named per-person commit counts on repo pages (off by default). EPI is meant for "
+        "team-level improvement, not individual evaluation — check with your team (and works council, "
+        "where one exists) before enabling.",
     )
     args = parser.parse_args(argv)
 
@@ -3058,7 +3045,9 @@ def main(argv: list[str] | None = None) -> None:
         all_repos = {r for r in all_repos if not _is_support_repo(product_dir, r, product_months)}
 
         for repo in sorted(all_repos):
-            html = render_repo_page(repo, product, display_name, base_dir, product_months)
+            html = render_repo_page(
+                repo, product, display_name, base_dir, product_months, show_contributors=args.show_contributors
+            )
             out = output_dir / f"productivity_{product}_{repo}.html"
             out.write_text(html, encoding="utf-8")
 

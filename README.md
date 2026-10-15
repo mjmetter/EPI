@@ -1,6 +1,16 @@
 # EPI Data Pipeline
 
-Engineering Productivity Index — DORA-aligned metrics collection, scoring, and reporting for board-level engineering visibility.
+Engineering Productivity Index — DORA-aligned metrics collection, scoring, and reporting that helps engineering teams see how they deliver and where to improve.
+
+## Recommended use
+
+EPI is built for **team-level, per-metric improvement**, not for judging people.
+
+- **Team-level:** every metric is a team or product aggregate. "Per engineer" metrics are team totals divided by headcount, a rate, not a personal score. Named per-person data stays off unless you pass `--show-contributors`.
+- **Per-metric:** each metric is reported on its own with its band and trend. There is deliberately no composite score, because one number hides the trade-offs between speed, quality and sustainability.
+- **For improvement:** use the trends to start conversations with the team about bottlenecks, not as targets. Metrics that become targets get gamed.
+
+Don't use EPI for individual performance reviews. If your organisation has a works council or similar employee representation, involve them before rolling it out.
 
 ## Quick Start
 
@@ -26,7 +36,7 @@ To run against your own data, copy `repos.yaml.example` → `repos.yaml`, popula
 
 ## Productivity Dashboard
 
-A standalone exec-facing dashboard designed for board meetings and monthly director reviews. It combines four per-engineer productivity trend charts with DORA-scored engineering metrics, a YoY deep-dive analysis, and AI tool spend tracking.
+A standalone static dashboard for monthly engineering reviews with teams and leadership. It combines four team throughput trends (normalised per engineer), DORA metrics with per-metric bands, a YoY deep-dive analysis, and AI tool spend tracking.
 
 ```bash
 generate-productivity-report
@@ -34,6 +44,7 @@ generate-productivity-report
 # With options
 generate-productivity-report --output-dir public/
 generate-productivity-report --products app_a app_b
+generate-productivity-report --show-contributors     # opt in to named per-person commit counts on repo pages
 
 # Output — three page types
 reports/productivity.html                          # Overview: all products, 13 months
@@ -41,7 +52,7 @@ reports/productivity_{product}.html                # Product: one line per repo
 reports/productivity_{product}_{repo}.html         # Repo: full history + activity breakdown
 ```
 
-**What it shows:**
+**What it shows** (team averages: the team's monthly total divided by its active headcount):
 
 | Metric | Definition |
 |--------|-----------|
@@ -58,7 +69,7 @@ reports/productivity_{product}_{repo}.html         # Repo: full history + activi
   - YoY deep-dive section — delta tables, trendlines, and residual analysis across the full archive history (not limited to 13 months)
   - AI spend stacked bar chart — LiteLLM, Cursor, and OpenAI cost by month from `ai-spend.yaml`; dual-axis active-users overlay
 - Product page: sortable repo table (commits / contributors / MRs / lines); support repos collapsed
-- Repo page: per-metric line charts + commit classification breakdown + top contributors bar chart + AI Readiness / AI Adoption sections
+- Repo page: per-metric line charts + commit classification breakdown + AI Readiness / AI Adoption sections (a named top-contributors card is added only with `--show-contributors`)
 - **AI chat panel** on every page — with page-specific context (metric series, repo list, classification data) baked into the system prompt
 - Archive data support — historical JSON files in `products/<product>/archive/<year>/` are included in YoY analysis automatically
 
@@ -71,7 +82,7 @@ reports/productivity_{product}_{repo}.html         # Repo: full history + activi
 | `collect-dora-metrics` | `epi.collectors.dora` | Measures deployment frequency, change failure rate, lead time and MTTR from deployment/incident events → `products/<product>/manual-YYYY-MM.yaml` |
 | `record-dora-event` | `epi.collectors.dora` | Appends a deployment or incident event from CI/CD → `products/<product>/dora-events.jsonl` |
 | `score-epi` | `epi.scoring` | Scoring engine — reads metrics JSON + manual YAML, applies band interpolation |
-| `generate-productivity-report` | `epi.reports.productivity` | Productivity dashboard — per-engineer trends, drilldowns, chat |
+| `generate-productivity-report` | `epi.reports.productivity` | Productivity dashboard — team trends, drilldowns, chat |
 | `import-incidents-csv` | `epi.importers.incidents` | Converts incident CSV exports into manual YAML input files |
 | `import-uptime` | `epi.importers.uptime` | Converts uptime monitoring exports into manual YAML health fields |
 
@@ -204,7 +215,7 @@ python3 -m pytest tests/test_productivity_report.py::TestChatIntegration -v
 
 | Metric | What It Measures |
 |--------|-----------------|
-| Commits | Total + per contributor |
+| Commits | Total + per contributor (feeds bus factor; names appear in the dashboard only with `--show-contributors`) |
 | MRs Merged | Via GitLab API |
 | Unique Tickets | Issue-tracker refs (Jira, Linear, etc.) in commit messages |
 | Lines Changed | Added / removed |

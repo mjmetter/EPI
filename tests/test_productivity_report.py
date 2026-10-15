@@ -480,7 +480,7 @@ class TestRenderRepoPage(unittest.TestCase):
             base_dir = Path(base)
             product_dir = base_dir / "products" / "testprod"
             self._write_repo_json(product_dir, "2026-01", "repo-x", commits=20)
-            html = render_repo_page("repo-x", "testprod", "Test Prod", base_dir, ["2026-01"])
+            html = render_repo_page("repo-x", "testprod", "Test Prod", base_dir, ["2026-01"], show_contributors=True)
 
         self.assertIn("Activity Breakdown", html)
         self.assertIn("Top Contributors", html)
@@ -505,7 +505,7 @@ class TestRenderRepoPage(unittest.TestCase):
             data["commits"]["per_contributor"] = {"alice<b>xss</b>": 10}
             data["commits"]["total"] = 10
             (product_dir / "2026-01_repo-x.json").write_text(json.dumps(data))
-            html = render_repo_page("repo-x", "testprod", "Test Prod", base_dir, ["2026-01"])
+            html = render_repo_page("repo-x", "testprod", "Test Prod", base_dir, ["2026-01"], show_contributors=True)
 
         # Raw tag must not appear in the contributor span; escaped form must be present
         self.assertNotIn(">alice<b>", html)
@@ -997,3 +997,46 @@ class TestPerRepoCursorSpend(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestContributorPrivacy(unittest.TestCase):
+    """Named per-person data stays off the dashboard unless --show-contributors is passed."""
+
+    def _write_repo(self, base_dir: Path) -> None:
+        prod_dir = base_dir / "products" / "alpha"
+        prod_dir.mkdir(parents=True)
+        data = {
+            "meta": {"repo": "repo-a", "month": "2026-01"},
+            "commits": {"total": 30, "per_contributor": {"Alice Example": 20, "Bob Example": 10}},
+            "commit_classification": {"feature": 20, "bugfix": 10},
+        }
+        (prod_dir / "2026-01_repo-a.json").write_text(json.dumps(data))
+
+    def test_repo_page_hides_names_by_default(self):
+        with tempfile.TemporaryDirectory() as base:
+            self._write_repo(Path(base))
+            html = render_repo_page("repo-a", "alpha", "Alpha", Path(base), ["2026-01"])
+
+        self.assertIn("Commit Classification", html)
+        self.assertNotIn("Top Contributors", html)
+        self.assertNotIn("Alice Example", html)  # neither in the card nor in the chat context
+
+    def test_repo_page_shows_names_when_opted_in(self):
+        with tempfile.TemporaryDirectory() as base:
+            self._write_repo(Path(base))
+            html = render_repo_page("repo-a", "alpha", "Alpha", Path(base), ["2026-01"], show_contributors=True)
+
+        self.assertIn("Top Contributors", html)
+        self.assertIn("Alice Example", html)
+
+    def test_cli_flag_defaults_off(self):
+        with tempfile.TemporaryDirectory() as base, tempfile.TemporaryDirectory() as out:
+            self._write_repo(Path(base))
+            (Path(base) / "repos.yaml").write_text("products:\n  alpha:\n    display_name: Alpha\n")
+            _mod.main(["--base-dir", base, "--output-dir", out])
+            default_html = (Path(out) / "productivity_alpha_repo-a.html").read_text()
+            _mod.main(["--base-dir", base, "--output-dir", out, "--show-contributors"])
+            opted_in_html = (Path(out) / "productivity_alpha_repo-a.html").read_text()
+
+        self.assertNotIn("Alice Example", default_html)
+        self.assertIn("Alice Example", opted_in_html)
